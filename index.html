@@ -4,867 +4,1365 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>工运 — 打工人每日运势</title>
+<meta name="description" content="不看星座不看八字，看你的工位朝向算今日工运！打工人专属每日运势。">
+<meta property="og:title" content="工运 — 打工人每日运势">
+<meta property="og:description" content="测测你今天的打工运势，摸鱼运、汇报运、加薪运...全方位预测！">
+<meta property="og:type" content="website">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-
   :root {
-    --bg: #0a0a1a;
-    --card: #12122a;
-    --card-border: rgba(255,255,255,0.06);
+    --bg: #06060f;
+    --card: rgba(18,18,42,0.85);
+    --card-solid: #12122a;
+    --card-border: rgba(255,255,255,0.08);
     --accent: #f5c542;
-    --accent-dim: rgba(245,197,66,0.15);
+    --accent2: #ff8c42;
+    --accent-dim: rgba(245,197,66,0.12);
     --text: #e8e8f0;
-    --text-dim: #8888aa;
+    --text-dim: #7777aa;
     --good: #5fe0a0;
     --bad: #f06070;
     --blue: #60a0ff;
+    --purple: #a07cff;
   }
-
+  html { scroll-behavior: smooth; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
     overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* ========== 星空背景 ========== */
-  .stars {
+  /* ====== Canvas 粒子背景 ====== */
+  #particleCanvas {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     pointer-events: none; z-index: 0;
-    overflow: hidden;
-  }
-  .star {
-    position: absolute;
-    background: white;
-    border-radius: 50%;
-    animation: twinkle var(--dur) ease-in-out infinite alternate;
-  }
-  @keyframes twinkle {
-    0% { opacity: 0.2; transform: scale(0.8); }
-    100% { opacity: 1; transform: scale(1.2); }
   }
 
-  /* ========== 容器 ========== */
+  /* ====== 渐变光晕 ====== */
+  .glow-orb {
+    position: fixed; border-radius: 50%;
+    filter: blur(80px); pointer-events: none; z-index: 0;
+    opacity: 0.3;
+  }
+  .glow-orb.o1 { width: 300px; height: 300px; background: #f5c542; top: -100px; right: -80px; }
+  .glow-orb.o2 { width: 250px; height: 250px; background: #a07cff; bottom: 10%; left: -80px; }
+  .glow-orb.o3 { width: 200px; height: 200px; background: #60a0ff; top: 40%; right: -60px; opacity: 0.2; }
+
+  /* ====== 容器 ====== */
   .container {
     position: relative; z-index: 1;
     max-width: 420px; margin: 0 auto;
-    padding: 24px 20px 60px;
+    padding: 20px 20px 80px;
     min-height: 100vh;
   }
 
-  /* ========== 头部 ========== */
-  .header {
-    text-align: center;
-    padding: 40px 0 20px;
+  /* ====== 头部 ====== */
+  .header { text-align: center; padding: 36px 0 12px; }
+  .logo-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px; height: 80px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    margin-bottom: 12px;
+    box-shadow: 0 8px 32px rgba(245,197,66,0.25);
+    font-size: 40px;
+    animation: float 3s ease-in-out infinite;
   }
-  .logo {
-    font-size: 56px;
-    line-height: 1;
-    margin-bottom: 8px;
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
   }
   .title {
-    font-size: 32px;
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--accent), #ff8c42);
+    font-size: 36px; font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2), #ff6b6b);
+    background-size: 200% 200%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    animation: gradientMove 3s ease infinite;
+  }
+  @keyframes gradientMove {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
   }
   .subtitle {
-    font-size: 14px;
-    color: var(--text-dim);
-    margin-top: 6px;
-    letter-spacing: 2px;
+    font-size: 13px; color: var(--text-dim);
+    margin-top: 4px; letter-spacing: 4px;
   }
-  .date-display {
-    margin-top: 16px;
-    font-size: 13px;
-    color: var(--text-dim);
+  .date-badge {
+    margin-top: 14px;
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--accent);
     background: var(--accent-dim);
-    display: inline-block;
-    padding: 4px 16px;
-    border-radius: 20px;
+    padding: 6px 16px; border-radius: 20px;
+    border: 1px solid rgba(245,197,66,0.15);
+  }
+  .date-badge::before { content: '📅'; }
+
+  /* ====== 页面切换 ====== */
+  .page { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+  .page.hidden {
+    opacity: 0; transform: translateY(30px) scale(0.98);
+    pointer-events: none; position: absolute; width: calc(100% - 40px);
   }
 
-  /* ========== 输入页 ========== */
-  .input-page, .result-page {
-    transition: opacity 0.4s, transform 0.4s;
+  /* ====== 步骤指示器 ====== */
+  .step-indicator {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin: 20px 0 8px;
   }
-  .input-page.hidden, .result-page.hidden {
-    opacity: 0;
-    transform: translateY(20px);
-    pointer-events: none;
-    position: absolute;
-    width: 100%;
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    transition: all 0.3s;
   }
-
-  .section-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: var(--accent);
-    margin: 28px 0 14px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .section-title::before {
-    content: '';
-    display: block;
-    width: 3px; height: 16px;
+  .step-dot.active {
     background: var(--accent);
-    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(245,197,66,0.5);
+    width: 24px; border-radius: 4px;
   }
+  .step-dot.done { background: var(--good); }
 
-  /* 选项网格 */
-  .option-grid {
-    display: grid;
-    gap: 10px;
-  }
-  .option-grid.cols-2 { grid-template-columns: 1fr 1fr; }
-  .option-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
-  .option-grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
-
-  .option-btn {
+  /* ====== Section ====== */
+  .section {
     background: var(--card);
-    border: 1.5px solid var(--card-border);
-    border-radius: 12px;
-    padding: 14px 8px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 14px;
+    animation: fadeUp 0.5s ease-out both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .section:nth-child(2) { animation-delay: 0.05s; }
+  .section:nth-child(3) { animation-delay: 0.1s; }
+  .section:nth-child(4) { animation-delay: 0.15s; }
+  .section:nth-child(5) { animation-delay: 0.2s; }
+
+  .section-label {
+    font-size: 14px; font-weight: 700; margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+    color: var(--text);
+  }
+  .section-label .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 7px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #1a1a2e; font-size: 12px; font-weight: 800;
+  }
+
+  /* ====== 选项 ====== */
+  .opt-grid { display: grid; gap: 10px; }
+  .opt-grid.c2 { grid-template-columns: 1fr 1fr; }
+  .opt-grid.c3 { grid-template-columns: 1fr 1fr 1fr; }
+  .opt-grid.c4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .opt {
+    background: rgba(255,255,255,0.03);
+    border: 1.5px solid rgba(255,255,255,0.06);
+    border-radius: 14px;
+    padding: 14px 6px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.25s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     user-select: none;
     -webkit-tap-highlight-color: transparent;
-  }
-  .option-btn:active { transform: scale(0.95); }
-  .option-btn.selected {
-    border-color: var(--accent);
-    background: var(--accent-dim);
-    box-shadow: 0 0 20px rgba(245,197,66,0.15);
-  }
-  .option-btn .icon { font-size: 24px; display: block; margin-bottom: 4px; }
-  .option-btn .label {
-    font-size: 12px;
-    color: var(--text-dim);
-    transition: color 0.25s;
-  }
-  .option-btn.selected .label { color: var(--accent); }
-
-  /* 工号输入 */
-  .number-input-wrap {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-  .num-btn {
-    width: 52px; height: 52px;
-    border-radius: 12px;
-    background: var(--card);
-    border: 1.5px solid var(--card-border);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.25s;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .num-btn:active { transform: scale(0.9); }
-  .num-btn.selected {
-    border-color: var(--accent);
-    background: var(--accent-dim);
-    color: var(--accent);
-    box-shadow: 0 0 20px rgba(245,197,66,0.15);
-  }
-
-  /* 开始按钮 */
-  .start-btn {
-    width: 100%;
-    margin-top: 36px;
-    padding: 16px;
-    border-radius: 16px;
-    border: none;
-    font-size: 18px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s;
-    background: linear-gradient(135deg, var(--accent), #ff8c42);
-    color: #1a1a2e;
-    letter-spacing: 2px;
     position: relative;
     overflow: hidden;
   }
-  .start-btn:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+  .opt::after {
+    content: '';
+    position: absolute; top: 50%; left: 50%;
+    width: 0; height: 0;
+    background: rgba(245,197,66,0.15);
+    border-radius: 50%;
+    transition: all 0.4s;
+    transform: translate(-50%, -50%);
   }
-  .start-btn:not(:disabled):active {
-    transform: scale(0.97);
+  .opt:active { transform: scale(0.94); }
+  .opt.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    box-shadow: 0 0 24px rgba(245,197,66,0.12), inset 0 0 20px rgba(245,197,66,0.05);
   }
-  .start-btn .shimmer {
-    position: absolute;
-    top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-    animation: shimmer 2s infinite;
+  .opt.selected::after { width: 120%; height: 120%; }
+  .opt .emoji { font-size: 26px; display: block; margin-bottom: 4px; position: relative; z-index: 1; }
+  .opt .txt {
+    font-size: 11px; color: var(--text-dim);
+    transition: color 0.3s; position: relative; z-index: 1;
+    font-weight: 500;
   }
-  @keyframes shimmer {
-    100% { left: 100%; }
+  .opt.selected .txt { color: var(--accent); font-weight: 600; }
+
+  /* 数字按钮 */
+  .num-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+  .nbtn {
+    aspect-ratio: 1;
+    border-radius: 14px;
+    background: rgba(255,255,255,0.03);
+    border: 1.5px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 800;
+    cursor: pointer;
+    transition: all 0.3s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    color: var(--text-dim);
+  }
+  .nbtn:active { transform: scale(0.9); }
+  .nbtn.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+    box-shadow: 0 0 20px rgba(245,197,66,0.15);
   }
 
-  /* ========== 结果页 ========== */
-  .result-card {
+  /* ====== 开始按钮 ====== */
+  .go-btn {
+    width: 100%; margin-top: 20px;
+    padding: 18px; border-radius: 18px;
+    border: none; font-size: 18px; font-weight: 800;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #1a1a2e;
+    letter-spacing: 3px;
+    position: relative; overflow: hidden;
+    transition: all 0.3s;
+    box-shadow: 0 4px 24px rgba(245,197,66,0.3);
+  }
+  .go-btn:disabled {
+    opacity: 0.3; cursor: not-allowed;
+    box-shadow: none;
+  }
+  .go-btn:not(:disabled):hover {
+    box-shadow: 0 6px 32px rgba(245,197,66,0.45);
+    transform: translateY(-1px);
+  }
+  .go-btn:not(:disabled):active { transform: scale(0.97) translateY(0); }
+  .go-btn .shine {
+    position: absolute;
+    top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+    animation: shine 2.5s infinite;
+  }
+  @keyframes shine { 100% { left: 150%; } }
+
+  /* ====== 加载页 ====== */
+  .loader-overlay {
+    position: fixed; inset: 0;
+    background: rgba(6,6,15,0.97);
+    z-index: 100;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s;
+  }
+  .loader-overlay.show { opacity: 1; pointer-events: all; }
+
+  .bagua {
+    width: 100px; height: 100px;
+    animation: spinSlow 3s linear infinite;
+    position: relative;
+  }
+  .bagua-inner {
+    font-size: 90px;
+    line-height: 1;
+  }
+  @keyframes spinSlow { 100% { transform: rotate(360deg); } }
+
+  .loader-text {
+    margin-top: 28px;
+    font-size: 16px;
+    color: var(--accent);
+    font-weight: 600;
+    text-align: center;
+  }
+  .loader-sub {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+    animation: blink 1.5s ease-in-out infinite;
+  }
+  @keyframes blink { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+  /* 进度条 */
+  .progress-bar {
+    width: 200px; height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    margin-top: 24px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; width: 0;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 2px;
+    transition: width 0.3s;
+  }
+
+  /* ====== 结果页 ====== */
+  .result-section {
     background: var(--card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border: 1px solid var(--card-border);
     border-radius: 20px;
     padding: 24px 20px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
+    animation: fadeUp 0.6s ease-out both;
   }
+  .result-section:nth-child(1) { animation-delay: 0.1s; }
+  .result-section:nth-child(2) { animation-delay: 0.2s; }
+  .result-section:nth-child(3) { animation-delay: 0.3s; }
+  .result-section:nth-child(4) { animation-delay: 0.4s; }
+  .result-section:nth-child(5) { animation-delay: 0.5s; }
+  .result-section:nth-child(6) { animation-delay: 0.6s; }
+  .result-section:nth-child(7) { animation-delay: 0.7s; }
 
-  /* 总评 */
-  .overall {
-    text-align: center;
-    padding-bottom: 20px;
-  }
-  .fortune-level {
-    font-size: 48px;
-    line-height: 1;
-    margin-bottom: 4px;
-  }
-  .fortune-label {
-    font-size: 24px;
-    font-weight: 800;
-    margin-bottom: 8px;
-  }
-  .fortune-stars {
-    font-size: 28px;
-    letter-spacing: 4px;
-    margin-bottom: 4px;
-  }
-  .fortune-score {
-    font-size: 13px;
+  .r-title {
+    font-size: 13px; font-weight: 700;
     color: var(--text-dim);
+    margin-bottom: 16px;
+    display: flex; align-items: center; gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
   }
 
-  /* 维度条 */
-  .dimension-list {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+  /* 总评大卡 */
+  .hero-card {
+    text-align: center;
+    padding: 32px 20px;
+    background: linear-gradient(180deg, var(--card) 0%, rgba(18,18,42,0.95) 100%);
+    position: relative;
   }
-  .dim-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+  .hero-card::before {
+    content: '';
+    position: absolute; top: -1px; left: 20%; right: 20%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
   }
-  .dim-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
-  .dim-name { font-size: 13px; color: var(--text-dim); width: 56px; flex-shrink: 0; }
+  .hero-emoji {
+    font-size: 72px; line-height: 1;
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s both;
+  }
+  @keyframes bounceIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .hero-label {
+    font-size: 32px; font-weight: 900;
+    margin: 8px 0 4px;
+    animation: fadeUp 0.5s 0.4s both;
+  }
+  .hero-stars {
+    font-size: 24px; letter-spacing: 6px;
+    margin: 8px 0;
+    animation: fadeUp 0.5s 0.5s both;
+  }
+  .hero-score-ring {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    margin-top: 12px;
+    position: relative;
+  }
+  .hero-score-ring svg {
+    position: absolute; top: 0; left: 0;
+    transform: rotate(-90deg);
+  }
+  .hero-score-num {
+    font-size: 28px; font-weight: 900;
+    position: relative; z-index: 1;
+  }
+  .hero-score-label {
+    font-size: 11px; color: var(--text-dim); margin-top: 4px;
+  }
+
+  /* 综合评语 */
+  .summary-text {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.8;
+    padding: 0 8px;
+    margin-top: 16px;
+    animation: fadeUp 0.5s 0.6s both;
+  }
+
+  /* 五维雷达（用条形图模拟） */
+  .dim-list { display: flex; flex-direction: column; gap: 16px; }
+  .dim-row { display: flex; align-items: center; gap: 10px; }
+  .dim-icon { font-size: 22px; width: 32px; text-align: center; flex-shrink: 0; }
+  .dim-info { flex: 1; }
+  .dim-top { display: flex; justify-content: space-between; margin-bottom: 6px; }
+  .dim-name { font-size: 13px; font-weight: 600; }
+  .dim-val { font-size: 13px; font-weight: 800; }
   .dim-bar-bg {
-    flex: 1;
-    height: 8px;
-    background: rgba(255,255,255,0.06);
-    border-radius: 4px;
+    height: 8px; border-radius: 4px;
+    background: rgba(255,255,255,0.05);
     overflow: hidden;
   }
   .dim-bar {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 1s ease-out;
-    width: 0;
+    height: 100%; border-radius: 4px;
+    width: 0; transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .dim-val { font-size: 13px; font-weight: 700; width: 32px; text-align: right; flex-shrink: 0; }
+  .dim-tip {
+    font-size: 11px; color: var(--text-dim);
+    margin-top: 4px; font-style: italic;
+  }
 
-  /* 宜/忌 */
-  .yi-ji-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-  .yi-col, .ji-col {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-  }
-  .yi-ji-header {
-    font-size: 18px;
-    font-weight: 800;
+  /* 宜忌 */
+  .yj-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .yj-col { display: flex; flex-direction: column; gap: 6px; }
+  .yj-header {
+    font-size: 20px; font-weight: 900;
     text-align: center;
-    padding: 6px 0;
-    border-radius: 8px;
-    margin-bottom: 2px;
+    padding: 10px 0;
+    border-radius: 12px;
+    margin-bottom: 4px;
+    letter-spacing: 4px;
   }
-  .yi-col .yi-ji-header { background: rgba(95,224,160,0.12); color: var(--good); }
-  .ji-col .yi-ji-header { background: rgba(240,96,112,0.12); color: var(--bad); }
-  .yi-ji-item {
+  .yj-col.yi .yj-header {
+    background: linear-gradient(135deg, rgba(95,224,160,0.15), rgba(95,224,160,0.05));
+    color: var(--good);
+    border: 1px solid rgba(95,224,160,0.1);
+  }
+  .yj-col.ji .yj-header {
+    background: linear-gradient(135deg, rgba(240,96,112,0.15), rgba(240,96,112,0.05));
+    color: var(--bad);
+    border: 1px solid rgba(240,96,112,0.1);
+  }
+  .yj-item {
     font-size: 13px;
-    padding: 8px 12px;
-    border-radius: 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
     text-align: center;
+    font-weight: 500;
   }
-  .yi-col .yi-ji-item { background: rgba(95,224,160,0.06); color: var(--good); }
-  .ji-col .yi-ji-item { background: rgba(240,96,112,0.06); color: var(--bad); }
+  .yj-col.yi .yj-item { background: rgba(95,224,160,0.06); color: var(--good); }
+  .yj-col.ji .yj-item { background: rgba(240,96,112,0.06); color: var(--bad); }
 
-  /* 幸运物 & 金句 */
-  .lucky-item {
-    text-align: center;
-    padding: 16px;
+  /* 幸运物 */
+  .lucky-center { text-align: center; padding: 8px 0; }
+  .lucky-big { font-size: 64px; margin-bottom: 8px; animation: float 3s ease-in-out infinite; }
+  .lucky-name { font-size: 18px; font-weight: 800; color: var(--accent); }
+  .lucky-desc { font-size: 13px; color: var(--text-dim); margin-top: 6px; }
+  .lucky-tip {
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--accent-dim);
+    display: inline-block;
+    padding: 4px 14px;
+    border-radius: 12px;
   }
-  .lucky-icon { font-size: 48px; margin-bottom: 8px; }
-  .lucky-name { font-size: 16px; font-weight: 700; color: var(--accent); }
-  .lucky-desc { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
 
-  .quote-box {
-    text-align: center;
-    padding: 20px 16px;
-    font-style: italic;
+  /* 同事匹配 */
+  .compat-card {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 14px;
+    border: 1px solid var(--card-border);
+    margin-bottom: 10px;
+  }
+  .compat-emoji { font-size: 36px; }
+  .compat-info { flex: 1; }
+  .compat-type { font-size: 14px; font-weight: 700; }
+  .compat-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .compat-tag {
+    font-size: 11px; padding: 3px 10px; border-radius: 8px;
+    font-weight: 600;
+  }
+  .tag-good { background: rgba(95,224,160,0.12); color: var(--good); }
+  .tag-warn { background: rgba(245,197,66,0.12); color: var(--accent); }
+  .tag-bad { background: rgba(240,96,112,0.12); color: var(--bad); }
+
+  /* 金句 */
+  .quote-wrap {
+    text-align: center; padding: 16px 12px;
     position: relative;
   }
-  .quote-box::before, .quote-box::after {
-    font-size: 40px;
-    color: var(--accent);
-    opacity: 0.3;
-    position: absolute;
+  .quote-mark {
+    font-size: 48px; color: var(--accent); opacity: 0.2;
+    position: absolute; line-height: 1;
   }
-  .quote-box::before { content: '\201C'; top: 4px; left: 8px; }
-  .quote-box::after { content: '\201D'; bottom: -4px; right: 8px; }
-  .quote-text {
-    font-size: 15px;
+  .quote-mark.open { top: 0; left: 4px; }
+  .quote-mark.close { bottom: 0; right: 4px; }
+  .quote-content {
+    font-size: 16px; font-weight: 600;
     line-height: 1.8;
-    color: var(--text);
+    padding: 0 20px;
   }
-  .quote-author {
-    font-size: 12px;
-    color: var(--text-dim);
-    margin-top: 8px;
-    font-style: normal;
+  .quote-from {
+    font-size: 12px; color: var(--text-dim);
+    margin-top: 10px;
   }
 
-  /* 底部按钮 */
-  .bottom-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 24px;
+  /* 工运走势 */
+  .trend-chart {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    height: 120px; padding: 0 4px;
+    gap: 6px;
   }
-  .action-btn {
-    flex: 1;
-    padding: 14px;
-    border-radius: 14px;
-    border: none;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.25s;
+  .trend-bar-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; height: 100%;
+    justify-content: flex-end;
+  }
+  .trend-bar {
+    width: 100%; border-radius: 6px 6px 2px 2px;
+    min-height: 8px;
+    transition: height 1s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+  }
+  .trend-bar .val {
+    position: absolute; top: -18px;
+    left: 50%; transform: translateX(-50%);
+    font-size: 10px; font-weight: 700;
+    white-space: nowrap;
+  }
+  .trend-label {
+    font-size: 10px; color: var(--text-dim);
+    margin-top: 6px; text-align: center;
+  }
+  .trend-bar-wrap.today .trend-bar {
+    box-shadow: 0 0 12px rgba(245,197,66,0.4);
+  }
+  .trend-bar-wrap.today .trend-label {
+    color: var(--accent); font-weight: 700;
+  }
+
+  /* 底部操作 */
+  .actions {
+    display: flex; gap: 10px;
+    margin-top: 20px;
+  }
+  .act-btn {
+    flex: 1; padding: 16px; border-radius: 16px;
+    border: none; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: all 0.25s;
     -webkit-tap-highlight-color: transparent;
+    display: flex; align-items: center; justify-content: center; gap: 6px;
   }
-  .action-btn:active { transform: scale(0.96); }
-  .btn-primary {
-    background: linear-gradient(135deg, var(--accent), #ff8c42);
+  .act-btn:active { transform: scale(0.96); }
+  .btn-gold {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
     color: #1a1a2e;
+    box-shadow: 0 4px 20px rgba(245,197,66,0.25);
   }
-  .btn-secondary {
+  .btn-glass {
     background: rgba(255,255,255,0.06);
     color: var(--text);
     border: 1px solid var(--card-border);
+    backdrop-filter: blur(10px);
   }
 
-  /* 加载动画 */
-  .loading-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(10,10,26,0.95);
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s;
-  }
-  .loading-overlay.show {
-    opacity: 1;
-    pointer-events: all;
-  }
-  .loading-spinner {
-    width: 60px; height: 60px;
-    border-radius: 50%;
-    border: 3px solid rgba(245,197,66,0.2);
-    border-top-color: var(--accent);
-    animation: spin 0.8s linear infinite;
-  }
-  @keyframes spin { 100% { transform: rotate(360deg); } }
-  .loading-text {
-    margin-top: 20px;
-    font-size: 15px;
-    color: var(--accent);
-    animation: pulse 1.5s ease-in-out infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1; }
+  .disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(119,119,170,0.4);
+    padding: 28px 0 20px;
+    line-height: 1.8;
   }
 
   /* Toast */
   .toast {
-    position: fixed;
-    bottom: 80px;
+    position: fixed; bottom: 80px;
     left: 50%; transform: translateX(-50%) translateY(20px);
-    background: rgba(245,197,66,0.95);
-    color: #1a1a2e;
-    padding: 10px 24px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    opacity: 0;
-    pointer-events: none;
-    transition: all 0.3s;
-    z-index: 200;
+    background: rgba(30,30,60,0.95);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 12px 28px;
+    border-radius: 24px;
+    font-size: 14px; font-weight: 600;
+    opacity: 0; pointer-events: none;
+    transition: all 0.3s; z-index: 200;
     white-space: nowrap;
+    backdrop-filter: blur(10px);
   }
   .toast.show {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
   }
 
-  /* 底部声明 */
-  .disclaimer {
+  /* 海报 Canvas */
+  #posterCanvas { display: none; }
+
+  /* 分享弹窗 */
+  .share-modal {
+    position: fixed; inset: 0;
+    background: rgba(6,6,15,0.95);
+    z-index: 150;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .share-modal.show { opacity: 1; pointer-events: all; }
+  .share-poster {
+    max-width: 340px; width: 100%;
+    border-radius: 16px;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.5);
+  }
+  .share-hint {
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 16px;
     text-align: center;
-    font-size: 11px;
-    color: rgba(136,136,170,0.5);
-    padding: 30px 0 20px;
-    line-height: 1.6;
+  }
+  .share-close {
+    margin-top: 16px;
+    padding: 12px 36px;
+    border-radius: 24px;
+    border: 1px solid var(--card-border);
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    font-size: 14px;
+    cursor: pointer;
   }
 </style>
 </head>
 <body>
 
-<!-- 星空 -->
-<div class="stars" id="stars"></div>
+<canvas id="particleCanvas"></canvas>
+<div class="glow-orb o1"></div>
+<div class="glow-orb o2"></div>
+<div class="glow-orb o3"></div>
 
-<!-- 加载动画 -->
-<div class="loading-overlay" id="loading">
-  <div class="loading-spinner"></div>
-  <div class="loading-text">正在观测你的工位星象...</div>
+<!-- 加载 -->
+<div class="loader-overlay" id="loader">
+  <div class="bagua"><div class="bagua-inner">☯</div></div>
+  <div class="loader-text" id="loaderText">正在连接工位能量场...</div>
+  <div class="loader-sub">请保持工位朝向不变</div>
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 </div>
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
+<!-- 分享弹窗 -->
+<div class="share-modal" id="shareModal">
+  <img class="share-poster" id="sharePosterImg" src="">
+  <div class="share-hint">📲 长按图片保存，发给同事一起测！</div>
+  <button class="share-close" onclick="closeShare()">关闭</button>
+</div>
+
+<canvas id="posterCanvas"></canvas>
+
 <div class="container">
   <!-- 头部 -->
   <div class="header">
-    <div class="logo">🏢</div>
+    <div class="logo-wrap">🏢</div>
     <div class="title">工运</div>
     <div class="subtitle">打 工 人 每 日 运 势</div>
-    <div class="date-display" id="dateDisplay"></div>
+    <div class="date-badge" id="dateBadge"></div>
   </div>
 
-  <!-- ===== 输入页 ===== -->
-  <div class="input-page" id="inputPage">
-
-    <div class="section-title">🧭 你的工位朝向</div>
-    <div class="option-grid cols-4" id="directionGrid">
-      <div class="option-btn" data-val="east"><span class="icon">🌅</span><span class="label">朝东</span></div>
-      <div class="option-btn" data-val="south"><span class="icon">☀️</span><span class="label">朝南</span></div>
-      <div class="option-btn" data-val="west"><span class="icon">🌇</span><span class="label">朝西</span></div>
-      <div class="option-btn" data-val="north"><span class="icon">🌙</span><span class="label">朝北</span></div>
+  <!-- ======= 输入页 ======= -->
+  <div class="page" id="inputPage">
+    <div class="step-indicator" id="stepDots">
+      <div class="step-dot active" data-s="0"></div>
+      <div class="step-dot" data-s="1"></div>
+      <div class="step-dot" data-s="2"></div>
+      <div class="step-dot" data-s="3"></div>
     </div>
 
-    <div class="section-title">📍 工位位置特征</div>
-    <div class="option-grid cols-2" id="featureGrid">
-      <div class="option-btn" data-val="window"><span class="icon">🪟</span><span class="label">靠窗位</span></div>
-      <div class="option-btn" data-val="corridor"><span class="icon">🚶</span><span class="label">靠走廊</span></div>
-      <div class="option-btn" data-val="toilet"><span class="icon">🚻</span><span class="label">靠厕所</span></div>
-      <div class="option-btn" data-val="boss"><span class="icon">👔</span><span class="label">靠老板</span></div>
-      <div class="option-btn" data-val="corner"><span class="icon">🫥</span><span class="label">角落位</span></div>
-      <div class="option-btn" data-val="center"><span class="icon">🎯</span><span class="label">正中间</span></div>
+    <div class="section">
+      <div class="section-label"><span class="num">1</span> 你的工位朝向</div>
+      <div class="opt-grid c4" id="g_dir">
+        <div class="opt" data-v="east"><span class="emoji">🌅</span><span class="txt">朝东</span></div>
+        <div class="opt" data-v="south"><span class="emoji">☀️</span><span class="txt">朝南</span></div>
+        <div class="opt" data-v="west"><span class="emoji">🌇</span><span class="txt">朝西</span></div>
+        <div class="opt" data-v="north"><span class="emoji">🌙</span><span class="txt">朝北</span></div>
+      </div>
     </div>
 
-    <div class="section-title">📅 入职星期几</div>
-    <div class="option-grid cols-4" id="weekdayGrid">
-      <div class="option-btn" data-val="1"><span class="icon">😐</span><span class="label">周一</span></div>
-      <div class="option-btn" data-val="2"><span class="icon">😶</span><span class="label">周二</span></div>
-      <div class="option-btn" data-val="3"><span class="icon">😏</span><span class="label">周三</span></div>
-      <div class="option-btn" data-val="4"><span class="icon">😌</span><span class="label">周四</span></div>
-      <div class="option-btn" data-val="5"><span class="icon">🥳</span><span class="label">周五</span></div>
-      <div class="option-btn" data-val="6"><span class="icon">😱</span><span class="label">周六</span></div>
-      <div class="option-btn" data-val="0"><span class="icon">💀</span><span class="label">周日</span></div>
-      <div class="option-btn" data-val="7"><span class="icon">🤷</span><span class="label">忘了</span></div>
+    <div class="section">
+      <div class="section-label"><span class="num">2</span> 工位位置特征</div>
+      <div class="opt-grid c3" id="g_feat">
+        <div class="opt" data-v="window"><span class="emoji">🪟</span><span class="txt">靠窗位</span></div>
+        <div class="opt" data-v="corridor"><span class="emoji">🚶</span><span class="txt">靠走廊</span></div>
+        <div class="opt" data-v="toilet"><span class="emoji">🚻</span><span class="txt">靠厕所</span></div>
+        <div class="opt" data-v="boss"><span class="emoji">👔</span><span class="txt">靠老板</span></div>
+        <div class="opt" data-v="corner"><span class="emoji">🫥</span><span class="txt">角落位</span></div>
+        <div class="opt" data-v="center"><span class="emoji">🎯</span><span class="txt">正中间</span></div>
+      </div>
     </div>
 
-    <div class="section-title">🔢 工号尾数</div>
-    <div class="number-input-wrap" id="numberGrid">
-      <div class="num-btn" data-val="0">0</div>
-      <div class="num-btn" data-val="1">1</div>
-      <div class="num-btn" data-val="2">2</div>
-      <div class="num-btn" data-val="3">3</div>
-      <div class="num-btn" data-val="4">4</div>
-      <div class="num-btn" data-val="5">5</div>
-      <div class="num-btn" data-val="6">6</div>
-      <div class="num-btn" data-val="7">7</div>
-      <div class="num-btn" data-val="8">8</div>
-      <div class="num-btn" data-val="9">9</div>
+    <div class="section">
+      <div class="section-label"><span class="num">3</span> 入职星期几</div>
+      <div class="opt-grid c4" id="g_week">
+        <div class="opt" data-v="1"><span class="emoji">😐</span><span class="txt">周一</span></div>
+        <div class="opt" data-v="2"><span class="emoji">😶</span><span class="txt">周二</span></div>
+        <div class="opt" data-v="3"><span class="emoji">😏</span><span class="txt">周三</span></div>
+        <div class="opt" data-v="4"><span class="emoji">😌</span><span class="txt">周四</span></div>
+        <div class="opt" data-v="5"><span class="emoji">🥳</span><span class="txt">周五</span></div>
+        <div class="opt" data-v="6"><span class="emoji">😱</span><span class="txt">周六</span></div>
+        <div class="opt" data-v="0"><span class="emoji">💀</span><span class="txt">周日</span></div>
+        <div class="opt" data-v="7"><span class="emoji">🤷</span><span class="txt">忘了</span></div>
+      </div>
     </div>
 
-    <button class="start-btn" id="startBtn" disabled>
-      <span class="shimmer"></span>
+    <div class="section">
+      <div class="section-label"><span class="num">4</span> 工号尾数</div>
+      <div class="num-grid" id="g_num">
+        <div class="nbtn" data-v="0">0</div>
+        <div class="nbtn" data-v="1">1</div>
+        <div class="nbtn" data-v="2">2</div>
+        <div class="nbtn" data-v="3">3</div>
+        <div class="nbtn" data-v="4">4</div>
+        <div class="nbtn" data-v="5">5</div>
+        <div class="nbtn" data-v="6">6</div>
+        <div class="nbtn" data-v="7">7</div>
+        <div class="nbtn" data-v="8">8</div>
+        <div class="nbtn" data-v="9">9</div>
+      </div>
+    </div>
+
+    <button class="go-btn" id="goBtn" disabled>
+      <span class="shine"></span>
       🔮 开始占卜工运
     </button>
   </div>
 
-  <!-- ===== 结果页 ===== -->
-  <div class="result-page hidden" id="resultPage">
+  <!-- ======= 结果页 ======= -->
+  <div class="page hidden" id="resultPage">
 
     <!-- 总评 -->
-    <div class="result-card overall" id="overallCard">
-      <div class="fortune-level" id="fortuneEmoji"></div>
-      <div class="fortune-label" id="fortuneLabel"></div>
-      <div class="fortune-stars" id="fortuneStars"></div>
-      <div class="fortune-score" id="fortuneScore"></div>
+    <div class="result-section hero-card" id="heroCard"></div>
+
+    <!-- 五维 -->
+    <div class="result-section">
+      <div class="r-title">📊 五维工运</div>
+      <div class="dim-list" id="dimList"></div>
     </div>
 
-    <!-- 五维运势 -->
-    <div class="result-card">
-      <div class="section-title">📊 五维工运</div>
-      <div class="dimension-list" id="dimList"></div>
-    </div>
-
-    <!-- 宜 / 忌 -->
-    <div class="result-card">
-      <div class="section-title">📜 今日宜忌</div>
-      <div class="yi-ji-grid" id="yiJiGrid"></div>
+    <!-- 宜忌 -->
+    <div class="result-section">
+      <div class="r-title">📜 今日宜忌</div>
+      <div class="yj-grid" id="yjGrid"></div>
     </div>
 
     <!-- 幸运物 -->
-    <div class="result-card lucky-item" id="luckyCard">
-      <div class="section-title" style="justify-content:center">🍀 今日幸运物</div>
-      <div class="lucky-icon" id="luckyIcon"></div>
-      <div class="lucky-name" id="luckyName"></div>
-      <div class="lucky-desc" id="luckyDesc"></div>
+    <div class="result-section">
+      <div class="r-title">🍀 今日幸运物</div>
+      <div class="lucky-center" id="luckyArea"></div>
     </div>
 
-    <!-- 打工人金句 -->
-    <div class="result-card quote-box" id="quoteCard">
-      <div class="quote-text" id="quoteText"></div>
-      <div class="quote-author" id="quoteAuthor"></div>
+    <!-- 同事相性 -->
+    <div class="result-section">
+      <div class="r-title">👥 今日同事相性</div>
+      <div id="compatArea"></div>
     </div>
 
-    <!-- 底部操作 -->
-    <div class="bottom-actions">
-      <button class="action-btn btn-secondary" onclick="retest()">🔄 重新测试</button>
-      <button class="action-btn btn-primary" onclick="shareResult()">📤 分享给同事</button>
+    <!-- 工运走势 -->
+    <div class="result-section">
+      <div class="r-title">📈 近七日工运走势</div>
+      <div class="trend-chart" id="trendChart"></div>
+    </div>
+
+    <!-- 金句 -->
+    <div class="result-section">
+      <div class="r-title">💬 今日打工人箴言</div>
+      <div class="quote-wrap" id="quoteArea"></div>
+    </div>
+
+    <!-- 操作 -->
+    <div class="actions">
+      <button class="act-btn btn-glass" onclick="retest()">🔄 重测</button>
+      <button class="act-btn btn-gold" onclick="genPoster()">📤 生成海报分享</button>
     </div>
 
     <div class="disclaimer">
-      ⚠️ 本测试纯属娱乐，工运好坏与实际工作无关<br>
-      如有雷同，说明你俩工位挨着
+      ⚠️ 本测试纯属娱乐，工运好坏与实际工作毫无关系<br>
+      如有雷同，说明你俩工位挨着 · 每日零点自动刷新
     </div>
   </div>
 </div>
 
 <script>
-// ========== 星空背景 ==========
-(function initStars() {
-  const c = document.getElementById('stars');
-  for (let i = 0; i < 80; i++) {
-    const s = document.createElement('div');
-    s.className = 'star';
-    const size = Math.random() * 2 + 1;
-    s.style.cssText = `
-      width:${size}px;height:${size}px;
-      left:${Math.random()*100}%;top:${Math.random()*100}%;
-      --dur:${Math.random()*3+2}s;
-      animation-delay:${Math.random()*3}s;
-    `;
-    c.appendChild(s);
+// ===== 粒子背景 =====
+(function() {
+  const c = document.getElementById('particleCanvas');
+  const ctx = c.getContext('2d');
+  let W, H, particles = [];
+  function resize() {
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
   }
+  window.addEventListener('resize', resize);
+  resize();
+  class P {
+    constructor() { this.reset(); }
+    reset() {
+      this.x = Math.random() * W;
+      this.y = Math.random() * H;
+      this.r = Math.random() * 1.5 + 0.5;
+      this.dx = (Math.random() - 0.5) * 0.3;
+      this.dy = (Math.random() - 0.5) * 0.3;
+      this.o = Math.random() * 0.5 + 0.2;
+      this.phase = Math.random() * Math.PI * 2;
+    }
+    draw(t) {
+      const flicker = 0.5 + 0.5 * Math.sin(t * 0.002 + this.phase);
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${this.o * flicker})`;
+      ctx.fill();
+      this.x += this.dx; this.y += this.dy;
+      if (this.x < 0 || this.x > W || this.y < 0 || this.y > H) this.reset();
+    }
+  }
+  for (let i = 0; i < 100; i++) particles.push(new P());
+  function loop(t) {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => p.draw(t));
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
 })();
 
-// ========== 日期显示 ==========
-(function showDate() {
-  const d = new Date();
-  const weekNames = ['日','一','二','三','四','五','六'];
-  document.getElementById('dateDisplay').textContent =
-    `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${weekNames[d.getDay()]}`;
-})();
+// ===== 日期 =====
+const TODAY = new Date();
+const WEEKNAMES = ['日','一','二','三','四','五','六'];
+document.getElementById('dateBadge').textContent =
+  `${TODAY.getFullYear()}年${TODAY.getMonth()+1}月${TODAY.getDate()}日 星期${WEEKNAMES[TODAY.getDay()]}`;
 
-// ========== 选项逻辑 ==========
-const state = { direction: null, feature: null, weekday: null, number: null };
+// ===== 选项逻辑 =====
+const S = { dir: null, feat: null, week: null, num: null };
+const KEYS = ['dir', 'feat', 'week', 'num'];
+const GRIDS = { dir: 'g_dir', feat: 'g_feat', week: 'g_week', num: 'g_num' };
 
-function setupOptionGroup(gridId, key) {
-  const grid = document.getElementById(gridId);
-  grid.addEventListener('click', e => {
-    const btn = e.target.closest('[data-val]');
+Object.entries(GRIDS).forEach(([key, id]) => {
+  document.getElementById(id).addEventListener('click', e => {
+    const btn = e.target.closest('[data-v]');
     if (!btn) return;
-    grid.querySelectorAll('[data-val]').forEach(b => b.classList.remove('selected'));
+    document.getElementById(id).querySelectorAll('[data-v]').forEach(b => b.classList.remove('selected'));
     btn.classList.add('selected');
-    state[key] = btn.dataset.val;
-    checkReady();
+    S[key] = btn.dataset.v;
+    updateSteps();
   });
-}
-setupOptionGroup('directionGrid', 'direction');
-setupOptionGroup('featureGrid', 'feature');
-setupOptionGroup('weekdayGrid', 'weekday');
-setupOptionGroup('numberGrid', 'number');
-
-function checkReady() {
-  document.getElementById('startBtn').disabled =
-    !(state.direction && state.feature && state.weekday && state.number !== null);
-}
-
-// ========== 开始占卜 ==========
-document.getElementById('startBtn').addEventListener('click', () => {
-  if (document.getElementById('startBtn').disabled) return;
-  showLoading();
 });
 
-function showLoading() {
-  const overlay = document.getElementById('loading');
-  const texts = [
-    '正在观测你的工位星象...',
-    '计算你的打工磁场...',
-    '连接公司风水数据库...',
-    '分析工位能量场...',
-    '占卜结果即将揭晓...'
-  ];
+function updateSteps() {
+  const dots = document.querySelectorAll('.step-dot');
+  KEYS.forEach((k, i) => {
+    dots[i].classList.toggle('done', S[k] !== null);
+    dots[i].classList.toggle('active', S[k] === null && (i === 0 || S[KEYS[i-1]] !== null));
+  });
+  document.getElementById('goBtn').disabled = !KEYS.every(k => S[k] !== null);
+}
+
+// ===== 开始 =====
+document.getElementById('goBtn').addEventListener('click', () => {
+  if (document.getElementById('goBtn').disabled) return;
+  startLoading();
+});
+
+// ===== 加载动画 =====
+function startLoading() {
+  const overlay = document.getElementById('loader');
+  const fill = document.getElementById('progressFill');
+  const textEl = document.getElementById('loaderText');
   overlay.classList.add('show');
-  let idx = 0;
+  fill.style.width = '0%';
+
+  const steps = [
+    { t: '正在连接工位能量场...', p: 15 },
+    { t: '扫描你的打工磁场...', p: 30 },
+    { t: '查询公司风水数据库...', p: 50 },
+    { t: '计算五维工运指数...', p: 70 },
+    { t: '生成今日宜忌...', p: 85 },
+    { t: '占卜结果即将揭晓！', p: 100 },
+  ];
+  let i = 0;
   const ti = setInterval(() => {
-    idx++;
-    if (idx < texts.length) {
-      overlay.querySelector('.loading-text').textContent = texts[idx];
+    if (i < steps.length) {
+      textEl.textContent = steps[i].t;
+      fill.style.width = steps[i].p + '%';
+      i++;
     }
-  }, 600);
+  }, 500);
+
   setTimeout(() => {
     clearInterval(ti);
     overlay.classList.remove('show');
-    generateResult();
-  }, 3000);
+    showResult();
+  }, 3200);
 }
 
-// ========== 内容数据库 ==========
-const FORTUNE_LEVELS = [
+// ===== 数据库 =====
+const LEVELS = [
   { min: 0,  label: '大凶', emoji: '💀', color: '#f06070' },
-  { min: 20, label: '凶',   emoji: '😰', color: '#e07050' },
-  { min: 35, label: '小凶', emoji: '😟', color: '#d09060' },
-  { min: 50, label: '平',   emoji: '😐', color: '#c0a070' },
-  { min: 65, label: '小吉', emoji: '🙂', color: '#90c070' },
-  { min: 80, label: '吉',   emoji: '😄', color: '#60d090' },
-  { min: 92, label: '大吉', emoji: '🤩', color: '#50e0b0' },
+  { min: 15, label: '凶',   emoji: '😰', color: '#e07050' },
+  { min: 30, label: '小凶', emoji: '😟', color: '#d09060' },
+  { min: 45, label: '平',   emoji: '😐', color: '#b0a070' },
+  { min: 60, label: '小吉', emoji: '🙂', color: '#90c070' },
+  { min: 75, label: '吉',   emoji: '😄', color: '#60d090' },
+  { min: 90, label: '大吉', emoji: '🤩', color: '#40e0b0' },
 ];
 
-const DIMENSIONS = [
-  { key: 'moyu',    name: '摸鱼运', icon: '🐟', color: '#60a0ff' },
-  { key: 'huibao',  name: '汇报运', icon: '📊', color: '#f5c542' },
-  { key: 'jiaxin',  name: '加薪运', icon: '💰', color: '#5fe0a0' },
-  { key: 'shuaguo', name: '甩锅运', icon: '🍳', color: '#ff8c42' },
-  { key: 'wufan',   name: '午饭运', icon: '🍜', color: '#e070c0' },
+const DIMS = [
+  { name: '摸鱼运', icon: '🐟', color: '#60a0ff', tips: [
+    '今天的摸鱼窗口期在下午3点', '领导眼神锐利，小心摸鱼',
+    '建议切换到PPT窗口再摸', '今天摸鱼被抓概率极低',
+    '厕所是今天最安全的摸鱼地点', '建议用代码伪装摸鱼界面'
+  ]},
+  { name: '汇报运', icon: '📊', color: '#f5c542', tips: [
+    '今天汇报，建议多用数据图表', '领导心情不错，适合汇报好消息',
+    '避免今天做任何述职报告', '你的PPT会获得好评',
+    '建议把坏消息夹在好消息中间说', '用"我们"代替"我"效果更好'
+  ]},
+  { name: '加薪运', icon: '💰', color: '#5fe0a0', tips: [
+    '不是今天，改天再说', '有微弱的加薪磁场波动',
+    '建议先更新简历再提加薪', '今天适合暗示而非直说',
+    '老板今天可能主动提加薪！', '财运在路上，但可能走错了路'
+  ]},
+  { name: '甩锅运', icon: '🍳', color: '#ff8c42', tips: [
+    '今天的锅比较重，甩不动', '甩锅成功率极高，放心操作',
+    '建议提前准备好甩锅话术', '今天可能会接到别人甩来的锅',
+    '用"流程问题"代替"人的问题"', '会议记录是你最好的防锅装备'
+  ]},
+  { name: '午饭运', icon: '🍜', color: '#e070c0', tips: [
+    '外卖会准时到达！', '今天食堂可能有惊喜',
+    '建议避开高峰期再去吃', '选餐第一眼看中的，就是它了',
+    '今天的外卖配送员会给你好评', '小心，今天容易点到踩雷的店'
+  ]},
 ];
 
-const YI_POOL = [
+const YI = [
   '带薪拉屎', '摸鱼刷手机', '提前下班', '和同事八卦',
   '喝奶茶续命', '把锅甩出去', '迟到5分钟', '假装很忙',
   '上厕所透气', '刷新招聘网站', '给自己点外卖', '工位上午睡',
-  '和领导偶遇', '主动汇报进展', '整理桌面', '清空收件箱',
-  '发一条朋友圈', '帮同事带咖啡', '写日报周报', '早到10分钟',
-  '提出新想法', '约同事午饭', '处理历史遗留问题', '学习新技能',
+  '和领导偶遇', '主动汇报进展', '清空收件箱', '约同事午饭',
+  '提出新想法', '写日报周报', '早到10分钟', '帮同事带咖啡',
+  '整理工位', '学习新技能', '处理历史遗留问题', '发一条朋友圈',
+  '在群里抢红包', '给实习生分享经验', '用快捷键提高效率', '和产品经理和解',
 ];
-
-const JI_POOL = [
-  '主动揽活', '和老板对视', '发错群消息', '在大群说话',
-  '提涨薪', '吐槽公司', '忘了静音', '打卡漏了',
-  '回复"收到"', '主动加班', '改别人代码', '说"这个需求不合理"',
-  '在工位吃螺蛳粉', '用公司电脑看视频', '群里抢红包手慢了',
+const JI = [
+  '主动揽活', '和老板对视', '发错群消息', '在大群发言',
+  '提涨薪', '吐槽公司', '忘了静音', '打卡漏签',
+  '回复"收到"', '主动加班', '改别人代码', '说需求不合理',
+  '在工位吃螺蛳粉', '用公司电脑看视频', '和领导坐同一电梯',
   '忘记保存文件', '和产品经理battle', '在会议上走神',
-  '说"我来吧"', '删错文件', '把甲方当乙方', '和实习生抢零食',
+  '说"我来吧"', '删错文件', '把甲方当乙方',
+  '和实习生抢零食', '会议上开麦吃东西', '提前发了周报结果周五还有活',
+  '大声讨论工资', '在厕所打电话被听到', '错把私聊发到大群',
 ];
 
-const LUCKY_ITEMS = [
-  { icon: '🌵', name: '工位上的枯萎仙人掌', desc: '它都能活，你也可以' },
-  { icon: '☕', name: '第三杯咖啡', desc: '前两杯只是预热' },
-  { icon: '🎧', name: '降噪耳机', desc: '物理隔绝996' },
-  { icon: '🧸', name: '工位上的小玩偶', desc: '精神支柱本柱' },
-  { icon: '🍜', name: '公司楼下的麻辣烫', desc: '打工人的快乐源泉' },
-  { icon: '🖊️', name: '一支笔', desc: '用来写辞职信的（先不写）' },
-  { icon: '🧹', name: '桌面收纳盒', desc: '整理桌面 = 整理人生' },
-  { icon: '🪴', name: '一盆绿萝', desc: '你俩互相关照' },
-  { icon: '📱', name: '手机里的外卖App', desc: '干饭才是正经事' },
-  { icon: '🧊', name: '冰美式', desc: '冰的，跟你的心一样' },
-  { icon: '🛏️', name: '午睡枕', desc: '趴着就是胜利' },
-  { icon: '🎰', name: '彩票一张', desc: '梦想还是要有的' },
-  { icon: '🐱', name: '公司门口的流浪猫', desc: '你们是同事' },
-  { icon: '🎒', name: '你的通勤背包', desc: '背着它就想跑路' },
-  { icon: '🍪', name: '抽屉里的零食', desc: '上班唯一的盼头' },
+const LUCKY = [
+  { icon: '🌵', name: '工位上的枯萎仙人掌', desc: '它都能活，你也可以', tip: '放在显示器右侧效果最佳' },
+  { icon: '☕', name: '第三杯咖啡', desc: '前两杯只是预热', tip: '下午3点喝效果拉满' },
+  { icon: '🎧', name: '降噪耳机', desc: '物理隔绝996', tip: '播放白噪音可叠加buff' },
+  { icon: '🧸', name: '工位小玩偶', desc: '精神支柱本柱', tip: '崩溃时捏一下回血50%' },
+  { icon: '🍜', name: '公司楼下的麻辣烫', desc: '打工人的快乐源泉', tip: '多加一份丸子运气翻倍' },
+  { icon: '🖊️', name: '一支还有墨的笔', desc: '随时可以写辞职信（先不写）', tip: '放在左边口袋招财' },
+  { icon: '🪴', name: '一盆绿萝', desc: '你俩互相关照', tip: '浇水时许个愿' },
+  { icon: '📱', name: '手机里的外卖App', desc: '干饭才是正经事', tip: '今天第一个推荐就是你的幸运餐' },
+  { icon: '🧊', name: '冰美式', desc: '冰的，跟你的心一样', tip: '加一份浓缩可解100%的班味' },
+  { icon: '🛏️', name: '午睡枕', desc: '趴着就是胜利', tip: '设好闹钟，别睡到下班' },
+  { icon: '🎰', name: '彩票一张', desc: '梦想还是要有的', tip: '买双色球，不买刮刮乐' },
+  { icon: '🐱', name: '公司门口的流浪猫', desc: '你们是同事', tip: '摸一下加10点幸运' },
+  { icon: '🍪', name: '抽屉里的零食', desc: '上班唯一的盼头', tip: '分给同事可触发社交运buff' },
+  { icon: '🧹', name: '桌面收纳盒', desc: '整理桌面 = 整理人生', tip: '把杂物清掉能提升10%效率运' },
+  { icon: '🎒', name: '你的通勤背包', desc: '背着它就想跑路', tip: '里面放颗糖，上班路上吃' },
+  { icon: '🌂', name: '放在公司的伞', desc: '永远用不上但不能没有', tip: '放在工位左边挡小人' },
 ];
 
 const QUOTES = [
-  { text: '上班就像一场修行，每天都在渡劫', author: '无名打工人' },
-  { text: '工作使我快乐？工资使我快乐。', author: '佚名' },
-  { text: '打工是不可能不打工的，这辈子都不可能不打工的', author: '社会哲学家' },
-  { text: '今天的班，是昨天的我答应上的，怪昨天的我', author: '量子打工学' },
-  { text: '别人的996是苦难，我的996是生活', author: '顿悟的打工人' },
-  { text: '我不是在加班，我是在积累猝死的KPI', author: '匿名' },
-  { text: '公司没了任何人都转得动，但少了你的工位会空着', author: '职场温暖学' },
-  { text: '今天不想上班，明天也不想，后天也是', author: '三天预报' },
-  { text: '只要我跑得够快，工作就追不上我', author: '物理学打工人' },
-  { text: '每次想辞职，就打开余额宝看看', author: '现实主义者' },
-  { text: '工作不会辜负你，它只会压垮你', author: '职场观察家' },
-  { text: '我的梦想是不上班，但我的贷款不允许', author: '房贷打工人' },
-  { text: '这份工作唯一的好处，就是能让我感谢周末', author: '时间管理大师' },
-  { text: '打工人打工魂，打工人都是人上人', author: '打工人宣言' },
-  { text: '上一天班可以发一天朋友圈，这样的人生有什么意义', author: '灵魂拷问' },
+  { text: '上班就是一场修行，每天都在渡劫。', from: '无名打工人' },
+  { text: '工作使我快乐？不，工资使我快乐。', from: '佚名' },
+  { text: '今天的班，是昨天的我答应上的，怪昨天的我。', from: '量子打工学' },
+  { text: '只要我跑得够快，deadline 就追不上我。', from: '物理学打工人' },
+  { text: '每次想辞职，就打开余额宝看看。', from: '现实主义者' },
+  { text: '我的梦想是不上班，但我的花呗不允许。', from: '消费主义打工人' },
+  { text: '打工人打工魂，打工人都是人上人。', from: '打工人宣言' },
+  { text: '上一天班可以发一天朋友圈，人生就是这么朴实无华。', from: '灵魂拷问' },
+  { text: '公司最不缺的就是人，最缺的是不想来上班的人。', from: '职场哲学' },
+  { text: '会议的本质：用集体的时间，证明一个人说了算。', from: '会议室的墙' },
+  { text: '我不是在加班，我是在积累带薪上厕所的资本。', from: '匿名' },
+  { text: '工位上的绿萝都比我有生命力。', from: '周一综合症患者' },
+  { text: '下班不是终点，只是另一个等待上班的起点。', from: '打工时空论' },
+  { text: '我对工作最大的尊重，就是准时打卡。', from: '职场仪式感' },
+  { text: '所谓成长，就是加班时不再抱怨，因为麻木了。', from: '资深打工人' },
+  { text: '没有困难的工作，只有勇敢的打工人和更勇敢的甲方。', from: '乙方格言' },
 ];
 
-// ========== 伪随机种子 ==========
-function seededRandom(seed) {
+const COMPAT = [
+  { emoji: '🧑‍💻', type: '技术大佬', desc: '帮你修Bug', tags: ['tag-good','贵人'] },
+  { emoji: '📣', type: '产品经理', desc: '可能给你加需求', tags: ['tag-warn','小心'] },
+  { emoji: '👔', type: '直属领导', desc: '今天心情不错', tags: ['tag-good','宜汇报'] },
+  { emoji: '🍵', type: '茶水间常客', desc: '有最新八卦', tags: ['tag-good','社交+'] },
+  { emoji: '🎯', type: '卷王同事', desc: '别被带节奏', tags: ['tag-warn','保持距离'] },
+  { emoji: '😎', type: '摸鱼搭子', desc: '今日最佳拍档', tags: ['tag-good','默契↑'] },
+  { emoji: '📋', type: 'HR小姐姐', desc: '可能找你谈话', tags: ['tag-bad','回避'] },
+  { emoji: '🎨', type: '设计师', desc: '配合默契度MAX', tags: ['tag-good','好搭档'] },
+  { emoji: '🧮', type: '财务同事', desc: '报销流程今天很顺', tags: ['tag-good','宜报销'] },
+  { emoji: '🫖', type: '前辈老员工', desc: '会分享人生经验', tags: ['tag-good','听ta说'] },
+];
+
+const SUMMARIES = {
+  high: [
+    '今天打工磁场极强，适合搞大事！',
+    '工运爆棚的一天，锦鲤就是你！',
+    '今天的你自带主角光环，什么都顺！',
+  ],
+  mid: [
+    '平平淡淡才是真，今天稳着来。',
+    '不好不坏的一天，重在保持心态。',
+    '今天的节奏：上班、摸鱼、下班，完美。',
+  ],
+  low: [
+    '今日工运不佳，建议低调行事。',
+    '今天适合划水，不适合出风头。',
+    '小心驶得万年船，今天别主动揽活。',
+  ],
+};
+
+// ===== 伪随机 =====
+function rng(seed) {
   let s = seed;
-  return function() {
-    s = (s * 9301 + 49297) % 233280;
-    return s / 233280;
-  };
+  return () => { s = (s * 16807 + 12345) % 2147483647; return (s & 0x7fffffff) / 0x7fffffff; };
 }
 
-function generateSeed() {
-  const d = new Date();
-  const dateNum = d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
-  const dirMap = { east:1, south:2, west:3, north:4 };
-  const featMap = { window:10, corridor:20, toilet:30, boss:40, corner:50, center:60 };
-  return dateNum
-    + (dirMap[state.direction] || 0) * 7
-    + (featMap[state.feature] || 0) * 3
-    + parseInt(state.weekday) * 13
-    + parseInt(state.number) * 37;
+function mkSeed(dateOffset) {
+  const d = new Date(TODAY);
+  d.setDate(d.getDate() + (dateOffset || 0));
+  const dn = d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+  const dm = { east:3, south:7, west:11, north:13 };
+  const fm = { window:17, corridor:23, toilet:29, boss:31, corner:37, center:41 };
+  return dn + (dm[S.dir]||0) * 7 + (fm[S.feat]||0) * 3 + parseInt(S.week) * 19 + parseInt(S.num) * 53;
 }
 
-function pick(arr, rng) {
-  return arr[Math.floor(rng() * arr.length)];
+function pick(a, r) { return a[Math.floor(r() * a.length)]; }
+function pickN(a, n, r) {
+  const c = [...a], res = [];
+  for (let i = 0; i < n && c.length; i++) res.push(c.splice(Math.floor(r() * c.length), 1)[0]);
+  return res;
 }
 
-function pickN(arr, n, rng) {
-  const copy = [...arr];
-  const result = [];
-  for (let i = 0; i < n && copy.length > 0; i++) {
-    const idx = Math.floor(rng() * copy.length);
-    result.push(copy.splice(idx, 1)[0]);
-  }
-  return result;
-}
+// ===== 生成结果 =====
+let resultData = {};
 
-// ========== 生成结果 ==========
-function generateResult() {
-  const seed = generateSeed();
-  const rng = seededRandom(seed);
+function showResult() {
+  const r = rng(mkSeed(0));
+  const score = Math.floor(r() * 100);
+  let level = LEVELS[0];
+  for (const l of LEVELS) if (score >= l.min) level = l;
+  const starN = Math.max(1, Math.min(5, Math.ceil(score / 20)));
 
-  // 总分
-  const totalScore = Math.floor(rng() * 100);
+  resultData = { score, level, starN };
 
-  // 等级
-  let level = FORTUNE_LEVELS[0];
-  for (const l of FORTUNE_LEVELS) {
-    if (totalScore >= l.min) level = l;
-  }
-
-  // 星星
-  const starCount = Math.max(1, Math.min(5, Math.ceil(totalScore / 20)));
-  const stars = '★'.repeat(starCount) + '☆'.repeat(5 - starCount);
-
-  // 填充总评
-  document.getElementById('fortuneEmoji').textContent = level.emoji;
-  const lbl = document.getElementById('fortuneLabel');
-  lbl.textContent = level.label;
-  lbl.style.color = level.color;
-  document.getElementById('fortuneStars').textContent = stars;
-  document.getElementById('fortuneStars').style.color = level.color;
-  document.getElementById('fortuneScore').textContent = `工运指数 ${totalScore}/100`;
-
-  // 五维
-  const dimContainer = document.getElementById('dimList');
-  dimContainer.innerHTML = '';
-  DIMENSIONS.forEach(dim => {
-    const val = Math.max(5, Math.min(100, Math.floor(rng() * 100)));
-    const item = document.createElement('div');
-    item.className = 'dim-item';
-    item.innerHTML = `
-      <span class="dim-icon">${dim.icon}</span>
-      <span class="dim-name">${dim.name}</span>
-      <div class="dim-bar-bg">
-        <div class="dim-bar" style="background:${dim.color};" data-width="${val}%"></div>
-      </div>
-      <span class="dim-val" style="color:${dim.color}">${val}</span>
-    `;
-    dimContainer.appendChild(item);
-  });
-
-  // 宜 / 忌
-  const yiItems = pickN(YI_POOL, 3, rng);
-  const jiItems = pickN(JI_POOL, 3, rng);
-  const yiJi = document.getElementById('yiJiGrid');
-  yiJi.innerHTML = `
-    <div class="yi-col">
-      <div class="yi-ji-header">✅ 宜</div>
-      ${yiItems.map(t => `<div class="yi-ji-item">${t}</div>`).join('')}
+  // ---- 总评 ----
+  const sumPool = score >= 70 ? SUMMARIES.high : score >= 40 ? SUMMARIES.mid : SUMMARIES.low;
+  document.getElementById('heroCard').innerHTML = `
+    <div class="hero-emoji">${level.emoji}</div>
+    <div class="hero-label" style="color:${level.color}">${level.label}</div>
+    <div class="hero-stars" style="color:${level.color}">${'★'.repeat(starN)}${'☆'.repeat(5-starN)}</div>
+    <div class="hero-score-ring">
+      <svg width="80" height="80">
+        <circle cx="40" cy="40" r="36" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="5"/>
+        <circle cx="40" cy="40" r="36" fill="none" stroke="${level.color}" stroke-width="5"
+          stroke-dasharray="${Math.PI*72}" stroke-dashoffset="${Math.PI*72*(1-score/100)}"
+          stroke-linecap="round" style="transition:stroke-dashoffset 1.5s ease-out"/>
+      </svg>
+      <span class="hero-score-num" style="color:${level.color}">${score}</span>
     </div>
-    <div class="ji-col">
-      <div class="yi-ji-header">❌ 忌</div>
-      ${jiItems.map(t => `<div class="ji-ji-item yi-ji-item">${t}</div>`).join('')}
+    <div class="hero-score-label">工运指数</div>
+    <div class="summary-text">${pick(sumPool, r)}</div>
+  `;
+
+  // ---- 五维 ----
+  const dimC = document.getElementById('dimList');
+  dimC.innerHTML = '';
+  const dimVals = [];
+  DIMS.forEach(d => {
+    const v = Math.max(5, Math.min(99, Math.floor(r() * 100)));
+    dimVals.push(v);
+    const tip = pick(d.tips, r);
+    dimC.innerHTML += `
+      <div class="dim-row">
+        <span class="dim-icon">${d.icon}</span>
+        <div class="dim-info">
+          <div class="dim-top">
+            <span class="dim-name">${d.name}</span>
+            <span class="dim-val" style="color:${d.color}">${v}</span>
+          </div>
+          <div class="dim-bar-bg">
+            <div class="dim-bar" style="background:linear-gradient(90deg,${d.color},${d.color}88);" data-w="${v}%"></div>
+          </div>
+          <div class="dim-tip">${tip}</div>
+        </div>
+      </div>
+    `;
+  });
+  resultData.dimVals = dimVals;
+
+  // ---- 宜忌 ----
+  const yiArr = pickN(YI, 4, r);
+  const jiArr = pickN(JI, 4, r);
+  resultData.yi = yiArr; resultData.ji = jiArr;
+  document.getElementById('yjGrid').innerHTML = `
+    <div class="yj-col yi">
+      <div class="yj-header">宜</div>
+      ${yiArr.map(t => `<div class="yj-item">${t}</div>`).join('')}
+    </div>
+    <div class="yj-col ji">
+      <div class="yj-header">忌</div>
+      ${jiArr.map(t => `<div class="yj-item">${t}</div>`).join('')}
     </div>
   `;
 
-  // 幸运物
-  const lucky = pick(LUCKY_ITEMS, rng);
-  document.getElementById('luckyIcon').textContent = lucky.icon;
-  document.getElementById('luckyName').textContent = lucky.name;
-  document.getElementById('luckyDesc').textContent = lucky.desc;
+  // ---- 幸运物 ----
+  const lk = pick(LUCKY, r);
+  resultData.lucky = lk;
+  document.getElementById('luckyArea').innerHTML = `
+    <div class="lucky-big">${lk.icon}</div>
+    <div class="lucky-name">${lk.name}</div>
+    <div class="lucky-desc">${lk.desc}</div>
+    <div class="lucky-tip">💡 ${lk.tip}</div>
+  `;
 
-  // 金句
-  const quote = pick(QUOTES, rng);
-  document.getElementById('quoteText').textContent = quote.text;
-  document.getElementById('quoteAuthor').textContent = `—— ${quote.author}`;
+  // ---- 同事相性 ----
+  const compats = pickN(COMPAT, 3, r);
+  resultData.compats = compats;
+  document.getElementById('compatArea').innerHTML = compats.map(c => `
+    <div class="compat-card">
+      <div class="compat-emoji">${c.emoji}</div>
+      <div class="compat-info">
+        <div class="compat-type">${c.type}</div>
+        <div class="compat-desc">${c.desc}</div>
+      </div>
+      <span class="compat-tag ${c.tags[0]}">${c.tags[1]}</span>
+    </div>
+  `).join('');
+
+  // ---- 走势 ----
+  const tc = document.getElementById('trendChart');
+  tc.innerHTML = '';
+  const dayLabels = [];
+  const dayScores = [];
+  for (let i = -3; i <= 3; i++) {
+    const dr = rng(mkSeed(i));
+    const ds = Math.floor(dr() * 100);
+    dayScores.push(ds);
+    const dd = new Date(TODAY); dd.setDate(dd.getDate() + i);
+    dayLabels.push(i === 0 ? '今天' : `${dd.getMonth()+1}/${dd.getDate()}`);
+  }
+  const maxS = Math.max(...dayScores, 1);
+  dayScores.forEach((ds, i) => {
+    const h = Math.max(12, (ds / maxS) * 100);
+    const isToday = i === 3;
+    const barColor = ds >= 70 ? 'var(--good)' : ds >= 40 ? 'var(--accent)' : 'var(--bad)';
+    tc.innerHTML += `
+      <div class="trend-bar-wrap ${isToday ? 'today' : ''}">
+        <div class="trend-bar" style="background:${barColor};height:0;" data-h="${h}%">
+          <span class="val" style="color:${barColor}">${ds}</span>
+        </div>
+        <div class="trend-label">${dayLabels[i]}</div>
+      </div>
+    `;
+  });
+
+  // ---- 金句 ----
+  const q = pick(QUOTES, r);
+  resultData.quote = q;
+  document.getElementById('quoteArea').innerHTML = `
+    <span class="quote-mark open">"</span>
+    <div class="quote-content">${q.text}</div>
+    <div class="quote-from">—— ${q.from}</div>
+    <span class="quote-mark close">"</span>
+  `;
 
   // 切换页面
   document.getElementById('inputPage').classList.add('hidden');
   document.getElementById('resultPage').classList.remove('hidden');
-
-  // 动画：维度条
-  setTimeout(() => {
-    document.querySelectorAll('.dim-bar').forEach(bar => {
-      bar.style.width = bar.dataset.width;
-    });
-  }, 100);
-
-  // 滚动到顶部
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // 动画
+  setTimeout(() => {
+    document.querySelectorAll('.dim-bar').forEach(b => b.style.width = b.dataset.w);
+    document.querySelectorAll('.trend-bar[data-h]').forEach(b => b.style.height = b.dataset.h);
+  }, 200);
 }
 
-// ========== 重新测试 ==========
+// ===== 重测 =====
 function retest() {
   document.getElementById('resultPage').classList.add('hidden');
   document.getElementById('inputPage').classList.remove('hidden');
-  // 清空选择
   document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
-  state.direction = state.feature = state.weekday = state.number = null;
-  document.getElementById('startBtn').disabled = true;
+  S.dir = S.feat = S.week = S.num = null;
+  document.getElementById('goBtn').disabled = true;
+  updateSteps();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-// ========== 分享 ==========
-function shareResult() {
-  // 尝试使用 Web Share API
-  if (navigator.share) {
-    navigator.share({
-      title: '工运 — 打工人每日运势',
-      text: '我刚测了今天的工运！你也来试试 👉',
-      url: window.location.href
-    }).catch(() => {});
-  } else {
-    // fallback: 复制链接
-    navigator.clipboard.writeText(window.location.href).then(() => {
-      showToast('🔗 链接已复制，快发给同事！');
-    }).catch(() => {
-      showToast('长按复制链接分享给同事吧~');
-    });
+// ===== 生成海报 =====
+function genPoster() {
+  const canvas = document.getElementById('posterCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 750, H = 1334;
+  canvas.width = W; canvas.height = H;
+
+  // 背景
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, '#0a0a1a');
+  grad.addColorStop(0.5, '#12122a');
+  grad.addColorStop(1, '#0a0a1a');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  // 星星
+  for (let i = 0; i < 60; i++) {
+    ctx.beginPath();
+    ctx.arc(Math.random()*W, Math.random()*H, Math.random()*1.5+0.5, 0, Math.PI*2);
+    ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.4+0.1})`;
+    ctx.fill();
   }
+
+  // 标题
+  ctx.textAlign = 'center';
+  ctx.font = '900 60px PingFang SC, sans-serif';
+  ctx.fillStyle = '#f5c542';
+  ctx.fillText('🏢 工运', W/2, 100);
+
+  ctx.font = '400 24px PingFang SC, sans-serif';
+  ctx.fillStyle = '#7777aa';
+  ctx.fillText('打工人每日运势', W/2, 140);
+
+  // 日期
+  ctx.font = '400 20px PingFang SC, sans-serif';
+  ctx.fillStyle = '#f5c542';
+  const dateStr = `${TODAY.getFullYear()}年${TODAY.getMonth()+1}月${TODAY.getDate()}日 星期${WEEKNAMES[TODAY.getDay()]}`;
+  ctx.fillText(dateStr, W/2, 180);
+
+  // 分割线
+  ctx.strokeStyle = 'rgba(245,197,66,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(100, 210); ctx.lineTo(W-100, 210); ctx.stroke();
+
+  // 总评
+  ctx.font = '80px serif';
+  ctx.fillText(resultData.level.emoji, W/2, 310);
+
+  ctx.font = '900 56px PingFang SC, sans-serif';
+  ctx.fillStyle = resultData.level.color;
+  ctx.fillText(resultData.level.label, W/2, 380);
+
+  ctx.font = '36px serif';
+  const stars = '★'.repeat(resultData.starN) + '☆'.repeat(5 - resultData.starN);
+  ctx.fillText(stars, W/2, 430);
+
+  ctx.font = '900 48px PingFang SC, sans-serif';
+  ctx.fillText(resultData.score, W/2, 500);
+  ctx.font = '400 18px PingFang SC, sans-serif';
+  ctx.fillStyle = '#7777aa';
+  ctx.fillText('工运指数', W/2, 530);
+
+  // 五维
+  ctx.strokeStyle = 'rgba(245,197,66,0.15)';
+  ctx.beginPath(); ctx.moveTo(60, 570); ctx.lineTo(W-60, 570); ctx.stroke();
+
+  ctx.textAlign = 'left';
+  DIMS.forEach((d, i) => {
+    const y = 620 + i * 50;
+    ctx.font = '28px serif';
+    ctx.fillText(d.icon, 80, y);
+    ctx.font = '600 22px PingFang SC, sans-serif';
+    ctx.fillStyle = '#e8e8f0';
+    ctx.fillText(d.name, 120, y);
+    // bar
+    const bw = 340;
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    roundRect(ctx, 240, y - 14, bw, 12, 6); ctx.fill();
+    ctx.fillStyle = d.color;
+    roundRect(ctx, 240, y - 14, bw * resultData.dimVals[i] / 100, 12, 6); ctx.fill();
+    ctx.textAlign = 'right';
+    ctx.font = '800 22px PingFang SC, sans-serif';
+    ctx.fillStyle = d.color;
+    ctx.fillText(resultData.dimVals[i], W - 80, y);
+    ctx.textAlign = 'left';
+  });
+
+  // 宜忌
+  const yjY = 900;
+  ctx.strokeStyle = 'rgba(245,197,66,0.15)';
+  ctx.beginPath(); ctx.moveTo(60, yjY - 20); ctx.lineTo(W-60, yjY - 20); ctx.stroke();
+
+  ctx.textAlign = 'center';
+  ctx.font = '800 28px PingFang SC, sans-serif';
+  ctx.fillStyle = '#5fe0a0';
+  ctx.fillText('✅ 宜', W/4, yjY + 20);
+  ctx.fillStyle = '#f06070';
+  ctx.fillText('❌ 忌', W*3/4, yjY + 20);
+
+  ctx.font = '400 20px PingFang SC, sans-serif';
+  resultData.yi.forEach((t, i) => {
+    ctx.fillStyle = '#5fe0a0';
+    ctx.fillText(t, W/4, yjY + 60 + i * 36);
+  });
+  resultData.ji.forEach((t, i) => {
+    ctx.fillStyle = '#f06070';
+    ctx.fillText(t, W*3/4, yjY + 60 + i * 36);
+  });
+
+  // 幸运物
+  const lkY = 1120;
+  ctx.fillStyle = '#f5c542';
+  ctx.font = '600 20px PingFang SC, sans-serif';
+  ctx.fillText(`🍀 幸运物：${resultData.lucky.icon} ${resultData.lucky.name}`, W/2, lkY);
+  ctx.fillStyle = '#7777aa';
+  ctx.font = '400 16px PingFang SC, sans-serif';
+  ctx.fillText(resultData.lucky.desc, W/2, lkY + 30);
+
+  // 金句
+  ctx.fillStyle = 'rgba(245,197,66,0.3)';
+  ctx.font = '400 16px PingFang SC, sans-serif';
+  ctx.fillText(`"${resultData.quote.text}"`, W/2, lkY + 80);
+  ctx.fillStyle = '#7777aa';
+  ctx.fillText(`—— ${resultData.quote.from}`, W/2, lkY + 110);
+
+  // 底部
+  ctx.fillStyle = 'rgba(119,119,170,0.4)';
+  ctx.font = '400 16px PingFang SC, sans-serif';
+  ctx.fillText('扫码或搜索「工运」测你的打工运势', W/2, H - 40);
+
+  // 显示
+  const dataUrl = canvas.toDataURL('image/png');
+  document.getElementById('sharePosterImg').src = dataUrl;
+  document.getElementById('shareModal').classList.add('show');
+}
+
+function closeShare() {
+  document.getElementById('shareModal').classList.remove('show');
+}
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
 }
 
 function showToast(msg) {
@@ -874,6 +1372,5 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2500);
 }
 </script>
-
 </body>
 </html>
