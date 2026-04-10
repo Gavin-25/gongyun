@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>工运 — 打工人每日运势</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a1a;
+    --card: #12122a;
+    --card-border: rgba(255,255,255,0.06);
+    --accent: #f5c542;
+    --accent-dim: rgba(245,197,66,0.15);
+    --text: #e8e8f0;
+    --text-dim: #8888aa;
+    --good: #5fe0a0;
+    --bad: #f06070;
+    --blue: #60a0ff;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ========== 星空背景 ========== */
+  .stars {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+    overflow: hidden;
+  }
+  .star {
+    position: absolute;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle var(--dur) ease-in-out infinite alternate;
+  }
+  @keyframes twinkle {
+    0% { opacity: 0.2; transform: scale(0.8); }
+    100% { opacity: 1; transform: scale(1.2); }
+  }
+
+  /* ========== 容器 ========== */
+  .container {
+    position: relative; z-index: 1;
+    max-width: 420px; margin: 0 auto;
+    padding: 24px 20px 60px;
+    min-height: 100vh;
+  }
+
+  /* ========== 头部 ========== */
+  .header {
+    text-align: center;
+    padding: 40px 0 20px;
+  }
+  .logo {
+    font-size: 56px;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .title {
+    font-size: 32px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), #ff8c42);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .subtitle {
+    font-size: 14px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    letter-spacing: 2px;
+  }
+  .date-display {
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--text-dim);
+    background: var(--accent-dim);
+    display: inline-block;
+    padding: 4px 16px;
+    border-radius: 20px;
+  }
+
+  /* ========== 输入页 ========== */
+  .input-page, .result-page {
+    transition: opacity 0.4s, transform 0.4s;
+  }
+  .input-page.hidden, .result-page.hidden {
+    opacity: 0;
+    transform: translateY(20px);
+    pointer-events: none;
+    position: absolute;
+    width: 100%;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--accent);
+    margin: 28px 0 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title::before {
+    content: '';
+    display: block;
+    width: 3px; height: 16px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* 选项网格 */
+  .option-grid {
+    display: grid;
+    gap: 10px;
+  }
+  .option-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .option-grid.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .option-grid.cols-5 { grid-template-columns: repeat(5, 1fr); }
+
+  .option-btn {
+    background: var(--card);
+    border: 1.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.25s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .option-btn:active { transform: scale(0.95); }
+  .option-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    box-shadow: 0 0 20px rgba(245,197,66,0.15);
+  }
+  .option-btn .icon { font-size: 24px; display: block; margin-bottom: 4px; }
+  .option-btn .label {
+    font-size: 12px;
+    color: var(--text-dim);
+    transition: color 0.25s;
+  }
+  .option-btn.selected .label { color: var(--accent); }
+
+  /* 工号输入 */
+  .number-input-wrap {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .num-btn {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    background: var(--card);
+    border: 1.5px solid var(--card-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .num-btn:active { transform: scale(0.9); }
+  .num-btn.selected {
+    border-color: var(--accent);
+    background: var(--accent-dim);
+    color: var(--accent);
+    box-shadow: 0 0 20px rgba(245,197,66,0.15);
+  }
+
+  /* 开始按钮 */
+  .start-btn {
+    width: 100%;
+    margin-top: 36px;
+    padding: 16px;
+    border-radius: 16px;
+    border: none;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: linear-gradient(135deg, var(--accent), #ff8c42);
+    color: #1a1a2e;
+    letter-spacing: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .start-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  .start-btn:not(:disabled):active {
+    transform: scale(0.97);
+  }
+  .start-btn .shimmer {
+    position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+  }
+  @keyframes shimmer {
+    100% { left: 100%; }
+  }
+
+  /* ========== 结果页 ========== */
+  .result-card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 20px;
+    padding: 24px 20px;
+    margin-bottom: 16px;
+  }
+
+  /* 总评 */
+  .overall {
+    text-align: center;
+    padding-bottom: 20px;
+  }
+  .fortune-level {
+    font-size: 48px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .fortune-label {
+    font-size: 24px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .fortune-stars {
+    font-size: 28px;
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+  }
+  .fortune-score {
+    font-size: 13px;
+    color: var(--text-dim);
+  }
+
+  /* 维度条 */
+  .dimension-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .dim-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .dim-icon { font-size: 20px; flex-shrink: 0; width: 28px; text-align: center; }
+  .dim-name { font-size: 13px; color: var(--text-dim); width: 56px; flex-shrink: 0; }
+  .dim-bar-bg {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .dim-bar {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 1s ease-out;
+    width: 0;
+  }
+  .dim-val { font-size: 13px; font-weight: 700; width: 32px; text-align: right; flex-shrink: 0; }
+
+  /* 宜/忌 */
+  .yi-ji-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .yi-col, .ji-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .yi-ji-header {
+    font-size: 18px;
+    font-weight: 800;
+    text-align: center;
+    padding: 6px 0;
+    border-radius: 8px;
+    margin-bottom: 2px;
+  }
+  .yi-col .yi-ji-header { background: rgba(95,224,160,0.12); color: var(--good); }
+  .ji-col .yi-ji-header { background: rgba(240,96,112,0.12); color: var(--bad); }
+  .yi-ji-item {
+    font-size: 13px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-align: center;
+  }
+  .yi-col .yi-ji-item { background: rgba(95,224,160,0.06); color: var(--good); }
+  .ji-col .yi-ji-item { background: rgba(240,96,112,0.06); color: var(--bad); }
+
+  /* 幸运物 & 金句 */
+  .lucky-item {
+    text-align: center;
+    padding: 16px;
+  }
+  .lucky-icon { font-size: 48px; margin-bottom: 8px; }
+  .lucky-name { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .lucky-desc { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+
+  .quote-box {
+    text-align: center;
+    padding: 20px 16px;
+    font-style: italic;
+    position: relative;
+  }
+  .quote-box::before, .quote-box::after {
+    font-size: 40px;
+    color: var(--accent);
+    opacity: 0.3;
+    position: absolute;
+  }
+  .quote-box::before { content: '\201C'; top: 4px; left: 8px; }
+  .quote-box::after { content: '\201D'; bottom: -4px; right: 8px; }
+  .quote-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  .quote-author {
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 8px;
+    font-style: normal;
+  }
+
+  /* 底部按钮 */
+  .bottom-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .action-btn {
+    flex: 1;
+    padding: 14px;
+    border-radius: 14px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .action-btn:active { transform: scale(0.96); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), #ff8c42);
+    color: #1a1a2e;
+  }
+  .btn-secondary {
+    background: rgba(255,255,255,0.06);
+    color: var(--text);
+    border: 1px solid var(--card-border);
+  }
+
+  /* 加载动画 */
+  .loading-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(10,10,26,0.95);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .loading-overlay.show {
+    opacity: 1;
+    pointer-events: all;
+  }
+  .loading-spinner {
+    width: 60px; height: 60px;
+    border-radius: 50%;
+    border: 3px solid rgba(245,197,66,0.2);
+    border-top-color: var(--accent);
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  .loading-text {
+    margin-top: 20px;
+    font-size: 15px;
+    color: var(--accent);
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(245,197,66,0.95);
+    color: #1a1a2e;
+    padding: 10px 24px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* 底部声明 */
+  .disclaimer {
+    text-align: center;
+    font-size: 11px;
+    color: rgba(136,136,170,0.5);
+    padding: 30px 0 20px;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+
+<!-- 星空 -->
+<div class="stars" id="stars"></div>
+
+<!-- 加载动画 -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">正在观测你的工位星象...</div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <!-- 头部 -->
+  <div class="header">
+    <div class="logo">🏢</div>
+    <div class="title">工运</div>
+    <div class="subtitle">打 工 人 每 日 运 势</div>
+    <div class="date-display" id="dateDisplay"></div>
+  </div>
+
+  <!-- ===== 输入页 ===== -->
+  <div class="input-page" id="inputPage">
+
+    <div class="section-title">🧭 你的工位朝向</div>
+    <div class="option-grid cols-4" id="directionGrid">
+      <div class="option-btn" data-val="east"><span class="icon">🌅</span><span class="label">朝东</span></div>
+      <div class="option-btn" data-val="south"><span class="icon">☀️</span><span class="label">朝南</span></div>
+      <div class="option-btn" data-val="west"><span class="icon">🌇</span><span class="label">朝西</span></div>
+      <div class="option-btn" data-val="north"><span class="icon">🌙</span><span class="label">朝北</span></div>
+    </div>
+
+    <div class="section-title">📍 工位位置特征</div>
+    <div class="option-grid cols-2" id="featureGrid">
+      <div class="option-btn" data-val="window"><span class="icon">🪟</span><span class="label">靠窗位</span></div>
+      <div class="option-btn" data-val="corridor"><span class="icon">🚶</span><span class="label">靠走廊</span></div>
+      <div class="option-btn" data-val="toilet"><span class="icon">🚻</span><span class="label">靠厕所</span></div>
+      <div class="option-btn" data-val="boss"><span class="icon">👔</span><span class="label">靠老板</span></div>
+      <div class="option-btn" data-val="corner"><span class="icon">🫥</span><span class="label">角落位</span></div>
+      <div class="option-btn" data-val="center"><span class="icon">🎯</span><span class="label">正中间</span></div>
+    </div>
+
+    <div class="section-title">📅 入职星期几</div>
+    <div class="option-grid cols-4" id="weekdayGrid">
+      <div class="option-btn" data-val="1"><span class="icon">😐</span><span class="label">周一</span></div>
+      <div class="option-btn" data-val="2"><span class="icon">😶</span><span class="label">周二</span></div>
+      <div class="option-btn" data-val="3"><span class="icon">😏</span><span class="label">周三</span></div>
+      <div class="option-btn" data-val="4"><span class="icon">😌</span><span class="label">周四</span></div>
+      <div class="option-btn" data-val="5"><span class="icon">🥳</span><span class="label">周五</span></div>
+      <div class="option-btn" data-val="6"><span class="icon">😱</span><span class="label">周六</span></div>
+      <div class="option-btn" data-val="0"><span class="icon">💀</span><span class="label">周日</span></div>
+      <div class="option-btn" data-val="7"><span class="icon">🤷</span><span class="label">忘了</span></div>
+    </div>
+
+    <div class="section-title">🔢 工号尾数</div>
+    <div class="number-input-wrap" id="numberGrid">
+      <div class="num-btn" data-val="0">0</div>
+      <div class="num-btn" data-val="1">1</div>
+      <div class="num-btn" data-val="2">2</div>
+      <div class="num-btn" data-val="3">3</div>
+      <div class="num-btn" data-val="4">4</div>
+      <div class="num-btn" data-val="5">5</div>
+      <div class="num-btn" data-val="6">6</div>
+      <div class="num-btn" data-val="7">7</div>
+      <div class="num-btn" data-val="8">8</div>
+      <div class="num-btn" data-val="9">9</div>
+    </div>
+
+    <button class="start-btn" id="startBtn" disabled>
+      <span class="shimmer"></span>
+      🔮 开始占卜工运
+    </button>
+  </div>
+
+  <!-- ===== 结果页 ===== -->
+  <div class="result-page hidden" id="resultPage">
+
+    <!-- 总评 -->
+    <div class="result-card overall" id="overallCard">
+      <div class="fortune-level" id="fortuneEmoji"></div>
+      <div class="fortune-label" id="fortuneLabel"></div>
+      <div class="fortune-stars" id="fortuneStars"></div>
+      <div class="fortune-score" id="fortuneScore"></div>
+    </div>
+
+    <!-- 五维运势 -->
+    <div class="result-card">
+      <div class="section-title">📊 五维工运</div>
+      <div class="dimension-list" id="dimList"></div>
+    </div>
+
+    <!-- 宜 / 忌 -->
+    <div class="result-card">
+      <div class="section-title">📜 今日宜忌</div>
+      <div class="yi-ji-grid" id="yiJiGrid"></div>
+    </div>
+
+    <!-- 幸运物 -->
+    <div class="result-card lucky-item" id="luckyCard">
+      <div class="section-title" style="justify-content:center">🍀 今日幸运物</div>
+      <div class="lucky-icon" id="luckyIcon"></div>
+      <div class="lucky-name" id="luckyName"></div>
+      <div class="lucky-desc" id="luckyDesc"></div>
+    </div>
+
+    <!-- 打工人金句 -->
+    <div class="result-card quote-box" id="quoteCard">
+      <div class="quote-text" id="quoteText"></div>
+      <div class="quote-author" id="quoteAuthor"></div>
+    </div>
+
+    <!-- 底部操作 -->
+    <div class="bottom-actions">
+      <button class="action-btn btn-secondary" onclick="retest()">🔄 重新测试</button>
+      <button class="action-btn btn-primary" onclick="shareResult()">📤 分享给同事</button>
+    </div>
+
+    <div class="disclaimer">
+      ⚠️ 本测试纯属娱乐，工运好坏与实际工作无关<br>
+      如有雷同，说明你俩工位挨着
+    </div>
+  </div>
+</div>
+
+<script>
+// ========== 星空背景 ==========
+(function initStars() {
+  const c = document.getElementById('stars');
+  for (let i = 0; i < 80; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 2 + 1;
+    s.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;top:${Math.random()*100}%;
+      --dur:${Math.random()*3+2}s;
+      animation-delay:${Math.random()*3}s;
+    `;
+    c.appendChild(s);
+  }
+})();
+
+// ========== 日期显示 ==========
+(function showDate() {
+  const d = new Date();
+  const weekNames = ['日','一','二','三','四','五','六'];
+  document.getElementById('dateDisplay').textContent =
+    `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日 星期${weekNames[d.getDay()]}`;
+})();
+
+// ========== 选项逻辑 ==========
+const state = { direction: null, feature: null, weekday: null, number: null };
+
+function setupOptionGroup(gridId, key) {
+  const grid = document.getElementById(gridId);
+  grid.addEventListener('click', e => {
+    const btn = e.target.closest('[data-val]');
+    if (!btn) return;
+    grid.querySelectorAll('[data-val]').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+    state[key] = btn.dataset.val;
+    checkReady();
+  });
+}
+setupOptionGroup('directionGrid', 'direction');
+setupOptionGroup('featureGrid', 'feature');
+setupOptionGroup('weekdayGrid', 'weekday');
+setupOptionGroup('numberGrid', 'number');
+
+function checkReady() {
+  document.getElementById('startBtn').disabled =
+    !(state.direction && state.feature && state.weekday && state.number !== null);
+}
+
+// ========== 开始占卜 ==========
+document.getElementById('startBtn').addEventListener('click', () => {
+  if (document.getElementById('startBtn').disabled) return;
+  showLoading();
+});
+
+function showLoading() {
+  const overlay = document.getElementById('loading');
+  const texts = [
+    '正在观测你的工位星象...',
+    '计算你的打工磁场...',
+    '连接公司风水数据库...',
+    '分析工位能量场...',
+    '占卜结果即将揭晓...'
+  ];
+  overlay.classList.add('show');
+  let idx = 0;
+  const ti = setInterval(() => {
+    idx++;
+    if (idx < texts.length) {
+      overlay.querySelector('.loading-text').textContent = texts[idx];
+    }
+  }, 600);
+  setTimeout(() => {
+    clearInterval(ti);
+    overlay.classList.remove('show');
+    generateResult();
+  }, 3000);
+}
+
+// ========== 内容数据库 ==========
+const FORTUNE_LEVELS = [
+  { min: 0,  label: '大凶', emoji: '💀', color: '#f06070' },
+  { min: 20, label: '凶',   emoji: '😰', color: '#e07050' },
+  { min: 35, label: '小凶', emoji: '😟', color: '#d09060' },
+  { min: 50, label: '平',   emoji: '😐', color: '#c0a070' },
+  { min: 65, label: '小吉', emoji: '🙂', color: '#90c070' },
+  { min: 80, label: '吉',   emoji: '😄', color: '#60d090' },
+  { min: 92, label: '大吉', emoji: '🤩', color: '#50e0b0' },
+];
+
+const DIMENSIONS = [
+  { key: 'moyu',    name: '摸鱼运', icon: '🐟', color: '#60a0ff' },
+  { key: 'huibao',  name: '汇报运', icon: '📊', color: '#f5c542' },
+  { key: 'jiaxin',  name: '加薪运', icon: '💰', color: '#5fe0a0' },
+  { key: 'shuaguo', name: '甩锅运', icon: '🍳', color: '#ff8c42' },
+  { key: 'wufan',   name: '午饭运', icon: '🍜', color: '#e070c0' },
+];
+
+const YI_POOL = [
+  '带薪拉屎', '摸鱼刷手机', '提前下班', '和同事八卦',
+  '喝奶茶续命', '把锅甩出去', '迟到5分钟', '假装很忙',
+  '上厕所透气', '刷新招聘网站', '给自己点外卖', '工位上午睡',
+  '和领导偶遇', '主动汇报进展', '整理桌面', '清空收件箱',
+  '发一条朋友圈', '帮同事带咖啡', '写日报周报', '早到10分钟',
+  '提出新想法', '约同事午饭', '处理历史遗留问题', '学习新技能',
+];
+
+const JI_POOL = [
+  '主动揽活', '和老板对视', '发错群消息', '在大群说话',
+  '提涨薪', '吐槽公司', '忘了静音', '打卡漏了',
+  '回复"收到"', '主动加班', '改别人代码', '说"这个需求不合理"',
+  '在工位吃螺蛳粉', '用公司电脑看视频', '群里抢红包手慢了',
+  '忘记保存文件', '和产品经理battle', '在会议上走神',
+  '说"我来吧"', '删错文件', '把甲方当乙方', '和实习生抢零食',
+];
+
+const LUCKY_ITEMS = [
+  { icon: '🌵', name: '工位上的枯萎仙人掌', desc: '它都能活，你也可以' },
+  { icon: '☕', name: '第三杯咖啡', desc: '前两杯只是预热' },
+  { icon: '🎧', name: '降噪耳机', desc: '物理隔绝996' },
+  { icon: '🧸', name: '工位上的小玩偶', desc: '精神支柱本柱' },
+  { icon: '🍜', name: '公司楼下的麻辣烫', desc: '打工人的快乐源泉' },
+  { icon: '🖊️', name: '一支笔', desc: '用来写辞职信的（先不写）' },
+  { icon: '🧹', name: '桌面收纳盒', desc: '整理桌面 = 整理人生' },
+  { icon: '🪴', name: '一盆绿萝', desc: '你俩互相关照' },
+  { icon: '📱', name: '手机里的外卖App', desc: '干饭才是正经事' },
+  { icon: '🧊', name: '冰美式', desc: '冰的，跟你的心一样' },
+  { icon: '🛏️', name: '午睡枕', desc: '趴着就是胜利' },
+  { icon: '🎰', name: '彩票一张', desc: '梦想还是要有的' },
+  { icon: '🐱', name: '公司门口的流浪猫', desc: '你们是同事' },
+  { icon: '🎒', name: '你的通勤背包', desc: '背着它就想跑路' },
+  { icon: '🍪', name: '抽屉里的零食', desc: '上班唯一的盼头' },
+];
+
+const QUOTES = [
+  { text: '上班就像一场修行，每天都在渡劫', author: '无名打工人' },
+  { text: '工作使我快乐？工资使我快乐。', author: '佚名' },
+  { text: '打工是不可能不打工的，这辈子都不可能不打工的', author: '社会哲学家' },
+  { text: '今天的班，是昨天的我答应上的，怪昨天的我', author: '量子打工学' },
+  { text: '别人的996是苦难，我的996是生活', author: '顿悟的打工人' },
+  { text: '我不是在加班，我是在积累猝死的KPI', author: '匿名' },
+  { text: '公司没了任何人都转得动，但少了你的工位会空着', author: '职场温暖学' },
+  { text: '今天不想上班，明天也不想，后天也是', author: '三天预报' },
+  { text: '只要我跑得够快，工作就追不上我', author: '物理学打工人' },
+  { text: '每次想辞职，就打开余额宝看看', author: '现实主义者' },
+  { text: '工作不会辜负你，它只会压垮你', author: '职场观察家' },
+  { text: '我的梦想是不上班，但我的贷款不允许', author: '房贷打工人' },
+  { text: '这份工作唯一的好处，就是能让我感谢周末', author: '时间管理大师' },
+  { text: '打工人打工魂，打工人都是人上人', author: '打工人宣言' },
+  { text: '上一天班可以发一天朋友圈，这样的人生有什么意义', author: '灵魂拷问' },
+];
+
+// ========== 伪随机种子 ==========
+function seededRandom(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function generateSeed() {
+  const d = new Date();
+  const dateNum = d.getFullYear() * 10000 + (d.getMonth()+1) * 100 + d.getDate();
+  const dirMap = { east:1, south:2, west:3, north:4 };
+  const featMap = { window:10, corridor:20, toilet:30, boss:40, corner:50, center:60 };
+  return dateNum
+    + (dirMap[state.direction] || 0) * 7
+    + (featMap[state.feature] || 0) * 3
+    + parseInt(state.weekday) * 13
+    + parseInt(state.number) * 37;
+}
+
+function pick(arr, rng) {
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+function pickN(arr, n, rng) {
+  const copy = [...arr];
+  const result = [];
+  for (let i = 0; i < n && copy.length > 0; i++) {
+    const idx = Math.floor(rng() * copy.length);
+    result.push(copy.splice(idx, 1)[0]);
+  }
+  return result;
+}
+
+// ========== 生成结果 ==========
+function generateResult() {
+  const seed = generateSeed();
+  const rng = seededRandom(seed);
+
+  // 总分
+  const totalScore = Math.floor(rng() * 100);
+
+  // 等级
+  let level = FORTUNE_LEVELS[0];
+  for (const l of FORTUNE_LEVELS) {
+    if (totalScore >= l.min) level = l;
+  }
+
+  // 星星
+  const starCount = Math.max(1, Math.min(5, Math.ceil(totalScore / 20)));
+  const stars = '★'.repeat(starCount) + '☆'.repeat(5 - starCount);
+
+  // 填充总评
+  document.getElementById('fortuneEmoji').textContent = level.emoji;
+  const lbl = document.getElementById('fortuneLabel');
+  lbl.textContent = level.label;
+  lbl.style.color = level.color;
+  document.getElementById('fortuneStars').textContent = stars;
+  document.getElementById('fortuneStars').style.color = level.color;
+  document.getElementById('fortuneScore').textContent = `工运指数 ${totalScore}/100`;
+
+  // 五维
+  const dimContainer = document.getElementById('dimList');
+  dimContainer.innerHTML = '';
+  DIMENSIONS.forEach(dim => {
+    const val = Math.max(5, Math.min(100, Math.floor(rng() * 100)));
+    const item = document.createElement('div');
+    item.className = 'dim-item';
+    item.innerHTML = `
+      <span class="dim-icon">${dim.icon}</span>
+      <span class="dim-name">${dim.name}</span>
+      <div class="dim-bar-bg">
+        <div class="dim-bar" style="background:${dim.color};" data-width="${val}%"></div>
+      </div>
+      <span class="dim-val" style="color:${dim.color}">${val}</span>
+    `;
+    dimContainer.appendChild(item);
+  });
+
+  // 宜 / 忌
+  const yiItems = pickN(YI_POOL, 3, rng);
+  const jiItems = pickN(JI_POOL, 3, rng);
+  const yiJi = document.getElementById('yiJiGrid');
+  yiJi.innerHTML = `
+    <div class="yi-col">
+      <div class="yi-ji-header">✅ 宜</div>
+      ${yiItems.map(t => `<div class="yi-ji-item">${t}</div>`).join('')}
+    </div>
+    <div class="ji-col">
+      <div class="yi-ji-header">❌ 忌</div>
+      ${jiItems.map(t => `<div class="ji-ji-item yi-ji-item">${t}</div>`).join('')}
+    </div>
+  `;
+
+  // 幸运物
+  const lucky = pick(LUCKY_ITEMS, rng);
+  document.getElementById('luckyIcon').textContent = lucky.icon;
+  document.getElementById('luckyName').textContent = lucky.name;
+  document.getElementById('luckyDesc').textContent = lucky.desc;
+
+  // 金句
+  const quote = pick(QUOTES, rng);
+  document.getElementById('quoteText').textContent = quote.text;
+  document.getElementById('quoteAuthor').textContent = `—— ${quote.author}`;
+
+  // 切换页面
+  document.getElementById('inputPage').classList.add('hidden');
+  document.getElementById('resultPage').classList.remove('hidden');
+
+  // 动画：维度条
+  setTimeout(() => {
+    document.querySelectorAll('.dim-bar').forEach(bar => {
+      bar.style.width = bar.dataset.width;
+    });
+  }, 100);
+
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ========== 重新测试 ==========
+function retest() {
+  document.getElementById('resultPage').classList.add('hidden');
+  document.getElementById('inputPage').classList.remove('hidden');
+  // 清空选择
+  document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+  state.direction = state.feature = state.weekday = state.number = null;
+  document.getElementById('startBtn').disabled = true;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ========== 分享 ==========
+function shareResult() {
+  // 尝试使用 Web Share API
+  if (navigator.share) {
+    navigator.share({
+      title: '工运 — 打工人每日运势',
+      text: '我刚测了今天的工运！你也来试试 👉',
+      url: window.location.href
+    }).catch(() => {});
+  } else {
+    // fallback: 复制链接
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      showToast('🔗 链接已复制，快发给同事！');
+    }).catch(() => {
+      showToast('长按复制链接分享给同事吧~');
+    });
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+
+</body>
+</html>
